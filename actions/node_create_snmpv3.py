@@ -19,13 +19,16 @@ from lib.actions import OrionBaseAction
 from lib.utils import send_user_error
 
 
-class NodeCreate(OrionBaseAction):
+class NodeCreateSNMPv3(OrionBaseAction):
     def run(self,
             node,
             ip_address,
             poller,
-            mon_protocol,
-            community,
+            snmpv3_username,
+            privacy_protocol,
+            privacy_password,
+            auth_protocol,
+            auth_password,
             status):
         """
         Create an node in Orion.
@@ -60,23 +63,28 @@ class NodeCreate(OrionBaseAction):
                 node,
                 results['label']))
 
-        # engineID if happens to be None, default to the primary.
-        if poller is not None:
+        # Set EngineID to 1/Primary by default
+        engineID = 1
+
+        # If a poller value has been included in the Action input
+        if poller:
             engineID = self.get_engine_id(poller)
-        else:
-            engineID = 1
 
         kargs = {'Caption': node,
                  'EngineID': engineID,
-                 'IPAddress': ip_address
+                 'IPAddress': ip_address,
+                 'ObjectSubType': 'SNMP',
+                 'SNMPVersion': 3,
+                 'SNMPV3Username': snmpv3_username,
+                 'SNMPV3PrivMethod': privacy_protocol,
+                 'SNMPV3PrivKeyIsPwd': True,
+                 'SNMPV3PrivKey': privacy_password,
+                 'SNMPV3AuthMethod': auth_protocol,
+                 'SNMPV3AuthKeyIsPwd': True,
+                 'SNMPV3AuthKey': auth_password,
+                 'DNS': '',
+                 'SysName': ''
                  }
-
-        if mon_protocol == "snmpv2":
-            kargs['ObjectSubType'] = "SNMP"
-            kargs['SNMPVersion'] = 2
-
-        # Check if the community should be replaced.
-        kargs['Community'] = self.get_snmp_community(community)
 
         self.logger.info("Creating Orion Node: {}".format(kargs))
         orion_data = self.create('Orion.Nodes', **kargs)
@@ -91,10 +99,10 @@ class NodeCreate(OrionBaseAction):
         pollers_to_add = {
             'N.Details.SNMP.Generic': True,
             'N.Uptime.SNMP.Generic': True,
-            'N.Cpu.SNMP.HrProcessorLoad': True,
-            'N.Memory.SNMP.NetSnmpReal': True,
-            'N.AssetInventory.Snmp.Generic': True,
-            'N.Topology_Layer3.SNMP.ipNetToMedia': True,
+            'N.Cpu.SNMP.HrProcessorLoad': False,
+            'N.Memory.SNMP.NetSnmpReal': False,
+            'N.AssetInventory.Snmp.Generic': False,
+            'N.Topology_Layer3.SNMP.ipNetToMedia': False,
             'N.Routing.SNMP.Ipv4CidrRoutingTable': False
         }
 

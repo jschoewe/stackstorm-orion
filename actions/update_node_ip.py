@@ -17,14 +17,14 @@ from lib.actions import OrionBaseAction
 from lib.utils import send_user_error
 
 
-class UpdateNodePoller(OrionBaseAction):
-    def run(self, node, poller):
+class UpdateNodeIP(OrionBaseAction):
+    def run(self, node, ipaddress):
         """
-        Change the poller for an Orion Node.
+        Update the IP address configured on an Orion Node.
 
         Args:
         - node: The caption in Orion of the node to poll.
-        - poller: The poller to change the node too.
+        - ipaddress: The new IP address to assign to the Node.
 
         Returns
         - True: As PollNow does not return any data.
@@ -42,9 +42,7 @@ class UpdateNodePoller(OrionBaseAction):
             send_user_error(error_msg)
             raise ValueError(error_msg)
 
-        engine_id = self.get_engine_id(poller)
-
-        kargs = {"EngineID": engine_id}
+        kargs = {"IPAddress": ipaddress}
 
         orion_data = self.update(orion_node.uri, **kargs)
 
